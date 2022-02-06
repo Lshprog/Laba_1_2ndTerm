@@ -29,9 +29,13 @@ namespace eshop {
 	public:
 		void buy_thing(Thing* data);
 		void print_out_a_bill(Thing* data);
+		void pring_out_an_order(Thing* data);
 	};
 	void add_to_black_list();
 	void add_new_thing();
+	void create_new_catagory();
 }
 void startprog();
-
+FILE* f_category;
+FILE* f_things;
+FILE* f_users;

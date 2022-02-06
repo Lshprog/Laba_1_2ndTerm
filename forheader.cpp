@@ -16,6 +16,10 @@ void eshop::NodeList::print_out_a_bill(Thing* data)
 	}
 }
 
+void eshop::NodeList::pring_out_an_order(Thing* data)
+{
+}
+
 void eshop::add_to_black_list()
 {
 }
@@ -25,11 +29,17 @@ void eshop::add_new_thing()
 
 }
 
+void eshop::create_new_catagory()
+{
+}
+
 void startprog()
 {
 	char login[20];
 	char password[20];
 	char c;
+
+	f_users = fopen("users.dat", "r+b");
 	
 	std::cout << "Enter 1 to sign in\n";
 	std::cout << "Enter 2 to sign up\n";
