@@ -1,6 +1,7 @@
 #pragma once
 namespace eshop {
 	struct User {
+		bool admin;
 		bool blacklist;
 		int money_balance=0;
 		char login[20];
@@ -27,17 +28,18 @@ namespace eshop {
 		Node* head = nullptr;
 		Node* tail = nullptr;
 	public:
-		void buy_thing(Thing* data);
-		void print_out_a_bill(Thing* data);
+		void add_to_order_thing(Thing* data);
+		void print_out_a_bill(Thing* data,User*);
 		void pring_out_an_order(Thing* data);
+		void delete_thing(Thing* data);
 	};
 	void add_to_black_list();
 	void add_new_thing();
 	void create_new_catagory();
-	void delete_thing();
 }
 void startprog();
-void go_to_menu();
+void go_to_menu(eshop::User*);
+void go_to_menu_admin();
 FILE* f_category;
 FILE* f_things;
 FILE* f_users;
