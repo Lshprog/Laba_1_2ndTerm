@@ -11,28 +11,43 @@ std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 	return out;
 }
 
-void eshop::NodeList::add_to_order_thing(Thing* data)
+void eshop::NodeList::add_to_order_thing(int id, char const* name)
 {
-	Node* node = new Node(data);
-	Node* iter = head;
-	if (head == nullptr) { head = node; tail = node; }
-	else {
-		while (true) {
-			if (node->data->id == iter->data->id) {
-				std::cout << "Thing with the same id and name is already in your order " << std::endl;
+	Thing* data;
+	Thing* temp;
+	f_things = fopen("things.dat", "r+b");
+	if (!fseek(f_things, sizeof(eshop::Thing) * (id - 1), SEEK_SET)) {
+		fread(temp, sizeof(eshop::Thing), 1, f_things);
+		fclose(f_things);
+		if ((temp->id == id)&&(!strcmp(temp->name,name))) {
+			if (temp->available) {
+				Node* node = new Node(data);
+				Node* iter = head;
+				if (head == nullptr) { head = node; tail = node; }
+				else {
+					while (true) {
+						if (node->data->id == iter->data->id) {
+							std::cout << "Thing with the same id and name is already in your order " << std::endl;
+							return;
+						}
+						if (iter == tail) {
+							break;
+						}
+						iter = iter->next;
+
+					}
+					node->prev = tail;
+					tail->next = node;
+					tail = node;
+				}
+				std::cout << "Thing with name : " << node->data->name << " and id " << node->data->id << " and price" << node->data->price << " is in your order" << std::endl;
 				return;
 			}
-			if (iter == tail) {
-				break;
-			}
-			iter = iter->next;
-
 		}
-		node->prev = tail;
-		tail->next = node;
-		tail = node;
 	}
-	std::cout << "Thing with name : " << node->data->name << " and id " << node->data->id<<" and price"<<node->data->price<<" is in your order" << std::endl;
+	std::cout << "There is no such thing in our shop\n";
+	fclose(f_things);
+
 }
 
 void eshop::delete_thing(Thing* data)
@@ -48,10 +63,61 @@ void eshop::NodeList::print_out_a_bill(User* user)
 
 void eshop::NodeList::print_out_an_order(User* user)
 {
+	if ((tail == nullptr) && (head == nullptr)) {
+		std::cout << "Your order is empty" << std::endl;
+		return;
+	}
+	Node* iter = head;
+	while (true) {
+
+		std::cout << *(iter->data);
+
+
+		if (iter == tail)
+			break;
+		iter = iter->next;
+	}
 }
 
 void eshop::NodeList::remove_from_order(int id,const char* name)
 {
+	Node* node = head;
+	Node* iter;
+	while (node != nullptr) {
+
+		if (node->data->id==id) {
+			std::cout << "Thing with name : " << node->data->name << " and id " << node->data->id << " and price" << node->data->price << " was removed from your order" << std::endl;
+			if (head == tail) {
+				head = nullptr;
+				tail = nullptr;
+							
+			}
+			else if (node == head) {
+				(node->next)->prev = nullptr;
+				head = node->next;
+								
+			}
+			else if (node == tail) {
+				(node->prev)->next = nullptr;
+				tail = node->prev;
+
+			}
+			else {
+							
+				(node->prev)->next = node->next;
+				(node->next)->prev = node->prev;
+
+			}
+
+			delete node;
+			return;
+		}
+		if (node == tail) {
+			std::cout << "Thing with name : " << node->data->name << " and id " << node->data->id << " and price" << node->data->price << " is not in your order" << std::endl;
+			return;
+		}
+		node = node->next;
+	}
 }
 
 void eshop::add_to_black_list(int id)
@@ -189,21 +255,12 @@ void go_to_menu(eshop::User* user) {
 			std::cout << "Something else?\n";
 
 		case 3:
-			f_things = fopen("thigns.dat", "r+b");
 			std::cout << "Name of the thing:   ";
 			std::cin >> name_of_thing;
 			std::cout << "Id of the thing:    ";
 			std::cin >> id;
-			if (!fseek(f_things, sizeof(eshop::Thing) * (id - 1), SEEK_SET)) {
-				fread(temp, sizeof(eshop::Thing), 1, f_things);
-				if (!strcmp(temp->name, name_of_thing)) {
-					list.add_to_order_thing(temp);
-					fclose(f_things);
-					std::cout << "What else? \n";
-					continue;
-				}
-			}
-			std::cout << "There is not thing with such name or id in our shop\n";
+			list.add_to_order_thing(id,name_of_thing);
+			std::cout << "What else? \n";
 			continue;
 		case 4:
 			std::cout << "Name of the thing:   ";
@@ -235,16 +292,36 @@ void go_to_menu_admin()
 
 void show_all_categories()
 {
+	f_category = fopen("categories.dat","r+b");
+	char category[20];
+	fseek(f_category,0,SEEK_SET);
+	while (!feof(f_category)) {
+		fseek(f_category, sizeof(category), SEEK_CUR);
+		fread(&category, sizeof(category), 1, f_category);
+		std::cout << category<<"  ";
+	}
+	fclose(f_category);
 }
 
 void show_all_things_available()
 {
+	eshop::Thing* temp;
+	f_things = fopen("things.dat","r+b");
+	fseek(f_things,-sizeof(eshop::Thing),SEEK_END);
+	fread(temp,sizeof(eshop::Thing),1,f_things);
+	for (int i = 0; i < temp->id; i++) {
+		fseek(f_things, sizeof(eshop::Thing)*i, SEEK_SET);
+		fread(temp, sizeof(eshop::Thing), 1, f_things);
+		std::cout << *(temp);
+	}
+	fclose(f_things);
 }
 
-eshop::Thing::Thing(char const* name, int category, int price,int id)
+eshop::Thing::Thing(char const* name,char const* category, int price,int id,bool available)
 {
 	this->id = id;
-	this->category = category;
 	this->price = price;
+	this->available = available;
+	strcpy_s(this->category,category);
 	strcpy_s(this->name,name);
 }

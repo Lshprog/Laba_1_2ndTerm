@@ -13,10 +13,11 @@ namespace eshop {
 
 	struct Thing {
 		int price;
-		int category;
+		char category[20];
 		char name[20];
 		int id;
-		Thing(char const* name,int category,int price,int id);
+		bool available;
+		Thing(char const* name,char const* category,int price,int id,bool available);
 	};
 	struct NodeList {
 	private:
@@ -29,7 +30,7 @@ namespace eshop {
 		Node* head = nullptr;
 		Node* tail = nullptr;
 	public:
-		void add_to_order_thing(Thing* data);
+		void add_to_order_thing(int,char const*);
 		void print_out_a_bill(User*);
 		void print_out_an_order(User*);
 		void remove_from_order(int,const char*);
