@@ -16,6 +16,7 @@ namespace eshop {
 		int category;
 		char name[20];
 		int id;
+		Thing(char const* name,int category,int price,int id);
 	};
 	struct NodeList {
 	private:
@@ -29,17 +30,20 @@ namespace eshop {
 		Node* tail = nullptr;
 	public:
 		void add_to_order_thing(Thing* data);
-		void print_out_a_bill(Thing* data,User*);
-		void pring_out_an_order(Thing* data);
-		void delete_thing(Thing* data);
+		void print_out_a_bill(User*);
+		void print_out_an_order(User*);
+		void remove_from_order(int,const char*);
 	};
-	void add_to_black_list();
-	void add_new_thing();
-	void create_new_catagory();
+	void delete_thing(Thing*);
+	void add_new_thing(Thing*);
+	void add_to_black_list(int);
+	void create_new_catagory(const char*);
 }
 void startprog();
 void go_to_menu(eshop::User*);
-void go_to_menu_admin();
+void go_to_menu_admin(eshop::User*);
+void show_all_categories();
+void show_all_things_available();
 FILE* f_category;
 FILE* f_things;
 FILE* f_users;
