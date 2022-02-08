@@ -50,9 +50,7 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 
 }
 
-void eshop::delete_thing(Thing* data)
-{
-}
+
 void eshop::NodeList::print_out_a_bill(User* user)
 {
 	Node* iter = head;
@@ -122,14 +120,51 @@ void eshop::NodeList::remove_from_order(int id,const char* name)
 
 void eshop::add_to_black_list(int id)
 {
+	User* bluser;
 	f_blackl = fopen("black_list.dat","r+b");
-	f_users = fopen("users.dat","r+b");
+	f_users = fopen("users.dat", "r+b");
+	if (!fseek(f_users, sizeof(User) * id, SEEK_SET)) {
+		fseek(f_users,sizeof(User),SEEK_CUR);
+		fread(bluser, sizeof(User), 1, f_users);
+		if (!bluser->blacklist) {
+			bluser->blacklist = true;
+			fseek(f_users,-sizeof(User),SEEK_CUR);
+			fwrite(bluser,sizeof(User),1,f_users);
+			fseek(f_blackl,-sizeof(User),SEEK_END);
+			fwrite(bluser,sizeof(User),1,f_blackl);
+		}
+	}
+	
 
 	fclose(f_blackl);
+	fclose(f_users);
+}
+
+void eshop::delete_thing(int id, const char* name)
+{
+	Thing* temp;
+	f_things = fopen("things.dat","r+b");
+	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
+		fseek(f_things, sizeof(Thing), SEEK_CUR);
+		fread(temp, sizeof(Thing), 1, f_things);
+		if (!strcmp(temp->name, name)) {
+			if (temp->available) {
+				temp->available = false;
+				fseek(f_things, -sizeof(Thing), SEEK_CUR);
+				fwrite(temp,sizeof(Thing),1,f_things);
+				fclose(f_things);
+				return;
+			}
+		}
+	}
+	std::cout << "Error \n";
+	fclose(f_things);
+
 }
 
 void eshop::add_new_thing(Thing* thing)
 {
+	
 
 }
 
@@ -181,7 +216,7 @@ void startprog()
 		std::cout << '\n';
 		std::cout << "Create your password:     ";
 		std::cin >> password;
-		eshop::User newuser = { login,password };
+		eshop::User newuser = { login,password,temp_c + 1 };
 		fseek(f_users, 0, SEEK_END);
 		fwrite(&newuser, sizeof(eshop::User), 1, f_users);
 		fclose(f_users);
@@ -200,7 +235,7 @@ void startprog()
 				if (!strcmp(temp->login, login)) {
 					if (!strcmp(temp->password, password)) {
 						std::cout << "Welcome\n";
-						if (temp->admin)
+						if (temp->id==1)
 							go_to_menu_admin();
 						else
 							go_to_menu(temp);
@@ -225,8 +260,9 @@ eshop::NodeList::Node::Node(Thing* data)
 	this->data = data;
 }
 
-eshop::User::User(char const* login, char const* password)
+eshop::User::User(char const* login, char const* password,int id)
 {
+	this->id = id;
 	strcpy_s(this->login,login);
 	strcpy_s(this->password, password);
 }
@@ -312,7 +348,8 @@ void show_all_things_available()
 	for (int i = 0; i < temp->id; i++) {
 		fseek(f_things, sizeof(eshop::Thing)*i, SEEK_SET);
 		fread(temp, sizeof(eshop::Thing), 1, f_things);
-		std::cout << *(temp);
+		if(temp->available)
+		 std::cout << *(temp);
 	}
 	fclose(f_things);
 }
