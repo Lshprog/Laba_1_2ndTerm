@@ -2,7 +2,10 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
-
+FILE* f_category;
+FILE* f_things;
+FILE* f_users;
+FILE* f_blackl;
 std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 	out << "Name: " << c.name<< "    ";
 	out << "ID: " << c.id<<"    ";
@@ -15,7 +18,7 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 {
 	Thing* data;
 	Thing* temp;
-	f_things = fopen("things.dat", "r+b");
+	f_things = fopen("things.dat", "rb+");
 	if (!fseek(f_things, sizeof(eshop::Thing) * id, SEEK_SET)) {
 		fseek(f_things,sizeof(eshop::Thing)*(id-1),SEEK_SET);
 		fread(temp, sizeof(eshop::Thing), 1, f_things);
@@ -255,6 +258,7 @@ void startprog()
 
 	switch (c) {
 	case 1:
+	{
 		while (true) {
 			std::cout << "Enter your login:        ";
 			std::cin >> login;
@@ -277,11 +281,12 @@ void startprog()
 		std::cout << '\n';
 		std::cout << "Create your password:     ";
 		std::cin >> password;
-		eshop::User newuser = { login,password,temp_c + 1,false };
+		eshop::User newuser = { login,password,temp_c + 1,true };
 		fseek(f_users, 0, SEEK_END);
 		fwrite(&newuser, sizeof(eshop::User), 1, f_users);
 		fclose(f_users);
 		go_to_menu(&newuser);
+	}
 	case 2:
 		while (true) {
 			std::cout << "Enter your login:        ";
@@ -297,7 +302,7 @@ void startprog()
 					if (!strcmp(temp->password, password)) {
 						std::cout << "Welcome\n";
 						if (temp->admin)
-							go_to_menu_admin();
+							go_to_menu_admin(temp);
 						else
 							go_to_menu(temp);
 						return;
@@ -442,11 +447,7 @@ void go_to_menu_admin()
 			std::cout << "What else? \n";
 			continue;
 		}
-
-
 	}
-
-
 }
 
 void show_all_categories()
@@ -466,7 +467,8 @@ void show_all_things_available()
 {
 	eshop::Thing* temp;
 	f_things = fopen("things.dat","r+b");
-	fseek(f_things,-sizeof(eshop::Thing),SEEK_END);
+	int temp_size = sizeof(eshop::Thing);
+	fseek(f_things,-temp_size,SEEK_END);
 	fread(temp,sizeof(eshop::Thing),1,f_things);
 	for (int i = 0; i < temp->id; i++) {
 		fseek(f_things, sizeof(eshop::Thing)*i, SEEK_SET);

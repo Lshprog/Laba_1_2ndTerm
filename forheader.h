@@ -1,5 +1,6 @@
 #pragma once
 
+
 namespace eshop {
 	struct User {
 		bool blacklist=false;
@@ -46,7 +47,3 @@ void go_to_menu(eshop::User*);
 void go_to_menu_admin(eshop::User*);
 void show_all_categories();
 void show_all_things_available();
-FILE* f_category;
-FILE* f_things;
-FILE* f_users;
-FILE* f_blackl;
