@@ -17,16 +17,16 @@ std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 
 void eshop::NodeList::add_to_order_thing(int id, char const* name)
 {
-	Thing* data;
-	Thing* temp;
+	Thing data = Thing(NULL, NULL, NULL, NULL, NULL);
+	Thing temp = Thing(NULL, NULL, NULL, NULL, NULL);
 	f_things = fopen("things.dat", "rb+");
 	if (!fseek(f_things, sizeof(eshop::Thing) * id, SEEK_SET)) {
 		fseek(f_things,sizeof(eshop::Thing)*(id-1),SEEK_SET);
-		fread(temp, sizeof(eshop::Thing), 1, f_things);
+		fread(&temp, sizeof(eshop::Thing), 1, f_things);
 		fclose(f_things);
-		if ((temp->id == id)&&(!strcmp(temp->name,name))) {
-			if (temp->available) {
-				Node* node = new Node(data);
+		if ((temp.id == id)&&(!strcmp(temp.name,name))) {
+			if (temp.available) {
+				Node* node = new Node(&data);
 				Node* iter = head;
 				if (head == nullptr) { head = node; tail = node; }
 				else {
@@ -125,19 +125,19 @@ void eshop::NodeList::remove_from_order(int id,const char* name)
 
 void eshop::add_to_black_list(int id)
 {
-	User* bluser;
+	User bluser= User(NULL, NULL, NULL, NULL);;
 	f_blackl=fopen("black_list.dat","r+b");
 	f_users=fopen("users.dat", "r+b");
 	if (!fseek(f_users, sizeof(User) * id, SEEK_SET)) {
 		fseek(f_users,sizeof(User)*(id-1),SEEK_SET);
-		fread(bluser, sizeof(User), 1, f_users);
-		if (!bluser->blacklist) {
-			bluser->blacklist = true;
+		fread(&bluser, sizeof(User), 1, f_users);
+		if (!bluser.blacklist) {
+			bluser.blacklist = true;
 			long int temp_size= sizeof(User);
 			fseek(f_users,-temp_size,SEEK_CUR);
-			fwrite(bluser,sizeof(User),1,f_users);
+			fwrite(&bluser,sizeof(User),1,f_users);
 			fseek(f_blackl,-temp_size,SEEK_END);
-			fwrite(bluser,sizeof(User),1,f_blackl);
+			fwrite(&bluser,sizeof(User),1,f_blackl);
 		}
 	}
 	
@@ -148,17 +148,17 @@ void eshop::add_to_black_list(int id)
 
 void eshop::delete_thing(int id, const char* name)
 {
-	Thing* temp;
+	Thing temp = Thing(NULL, NULL, NULL, NULL, NULL);
 	f_things= fopen("things.dat","r+b");
 	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
 		fseek(f_things, sizeof(Thing)*(id-1), SEEK_SET);
-		fread(temp, sizeof(Thing), 1, f_things);
-		if (!strcmp(temp->name, name)) {
-			if (temp->available) {
-				temp->available = false;
+		fread(&temp, sizeof(Thing), 1, f_things);
+		if (!strcmp(temp.name, name)) {
+			if (temp.available) {
+				temp.available = false;
 				long int temp_size = sizeof(Thing);
 				fseek(f_things, -temp_size, SEEK_CUR);
-				fwrite(temp,sizeof(Thing),1,f_things);
+				fwrite(&temp,sizeof(Thing),1,f_things);
 				fclose(f_things);
 				return;
 			}
@@ -173,26 +173,26 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 {
 	int temp_size = sizeof(Thing);
 	int temp_last_id;
-	Thing* temp;
+	Thing temp = Thing(NULL,NULL,NULL,NULL,NULL);
 
 	f_things = fopen("things.dat", "r+b");
 
 	fseek(f_things, -temp_size, SEEK_END);
-	fread(temp, sizeof(Thing), 1, f_things);
-	temp_last_id = temp->id;
+	fread(&temp, sizeof(Thing), 1, f_things);
+	temp_last_id = temp.id;
 	for (int i = 0; i < temp_last_id; i++) {
 		fseek(f_things, sizeof(Thing) * i, SEEK_SET);
-		fread(temp, sizeof(Thing), 1, f_things);
-		if (!strcmp(temp->name, name) && (temp->price == price)) {
-			if (temp->available) {
+		fread(&temp, sizeof(Thing), 1, f_things);
+		if (!strcmp(temp.name, name) && (temp.price == price)) {
+			if (temp.available) {
 				std::cout << "Such thing is already in the list!!! \n";
 				fclose(f_things);
 				return;
 			}
-			else if (!temp->available) {
-				temp->available = true;
-				fseek(f_things, sizeof(Thing) * (temp->id - 1), SEEK_SET);
-				fwrite(temp, sizeof(Thing), 1, f_things);
+			else if (!temp.available) {
+				temp.available = true;
+				fseek(f_things, sizeof(Thing) * (temp.id - 1), SEEK_SET);
+				fwrite(&temp, sizeof(Thing), 1, f_things);
 				fclose(f_things);
 				std::cout << "This thing is now available in our shop \n";
 				return;
@@ -201,10 +201,9 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 		}
 	}
 	fseek(f_things, 0, SEEK_END);
-	temp = new eshop::Thing(name, category, price, temp_last_id + 1, true);
-	fwrite(temp, sizeof(Thing), 1, f_things);
+	fwrite(&temp, sizeof(Thing), 1, f_things);
 	std::cout << "This thing is now available in our shop \n";
-	std::cout << *(temp);
+	std::cout << *(&temp);
 	fclose(f_things);
 
 }
@@ -214,7 +213,7 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 
 void eshop::create_new_catagory(const char* category)
 {
-	char temp_category[20];
+	char temp_category[20] = {0};
 	int temp_size = sizeof(temp_category);
 
 	f_category = fopen("category.dat", "r+b");
@@ -229,7 +228,7 @@ void eshop::create_new_catagory(const char* category)
 		}
 	}
 	fseek(f_category, 0, SEEK_END);
-	fwrite(temp_category, sizeof(temp_size), 1, f_category);
+	fwrite(&temp_category, sizeof(temp_size), 1, f_category);
 	std::cout <<"Category: "<<category<<" is now available in our shop \n";
 	fclose(f_category);
 
@@ -244,7 +243,7 @@ void startprog()
 	char c;
 	bool incorrect_login = false;
 	int temp_c;
-	eshop::User* temp;
+	eshop::User temp= eshop::User(NULL,NULL,NULL,NULL);
 
 	f_users=fopen("users.dat", "r+b");
 	
@@ -254,8 +253,8 @@ void startprog()
 
 	long int temp_size = sizeof(eshop::User);
 	fseek(f_users, -temp_size, SEEK_END);
-	fread(temp, sizeof(eshop::User), 1, f_users);
-	temp_c = temp->id;
+	fread(&temp, sizeof(eshop::User), 1, f_users);
+	temp_c = temp.id;
 
 	switch (c) {
 	case 1:
@@ -266,8 +265,8 @@ void startprog()
 
 			for (int i = 1; i < temp_c; i++) {
 				fseek(f_users, sizeof(eshop::User) * i, SEEK_SET);
-				fread(temp, sizeof(eshop::User), 1, f_users);
-				if (!strcmp(temp->login, login)) {
+				fread(&temp, sizeof(eshop::User), 1, f_users);
+				if (!strcmp(temp.login, login)) {
 					incorrect_login = true;
 					break;
 				}
@@ -282,10 +281,10 @@ void startprog()
 		std::cout << '\n';
 		std::cout << "Create your password:     ";
 		std::cin >> password;
-		eshop::User newuser = { login,password,temp_c + 1,true };
+		eshop::User newuser = eshop::User(login,password,temp_c + 1,true);
 		fseek(f_users, 0, SEEK_END);
 		fwrite(&newuser, sizeof(eshop::User), 1, f_users);
-		fclose(f_users);
+		fclose(f_users);	
 		go_to_menu(&newuser);
 	}
 	case 2:
@@ -298,14 +297,14 @@ void startprog()
 
 			for (int i = 1; i < temp_c; i++) {
 				fseek(f_users, sizeof(eshop::User) * i, SEEK_SET);
-				fread(temp, sizeof(eshop::User), 1, f_users);
-				if (!strcmp(temp->login, login)) {
-					if (!strcmp(temp->password, password)) {
+				fread(&temp, sizeof(eshop::User), 1, f_users);
+				if (!strcmp(temp.login, login)) {
+					if (!strcmp(temp.password, password)) {
 						std::cout << "Welcome\n";
-						if (temp->admin)
-							go_to_menu_admin(temp);
+						if (temp.admin)
+							go_to_menu_admin(&temp);
 						else
-							go_to_menu(temp);
+							go_to_menu(&temp);
 						return;
 					}
 					else {
@@ -339,7 +338,6 @@ void go_to_menu(eshop::User* user) {
 	eshop::NodeList list = eshop::NodeList();
 	char name_of_thing[20];
 	int id;
-	eshop::Thing* temp;
 
 	std::cout << "Enter 1 to show categories of things\n";
 	std::cout << "Enter 2 to show the full list of things\n";
@@ -466,16 +464,16 @@ void show_all_categories()
 
 void show_all_things_available()
 {
-	eshop::Thing* temp;
+	eshop::Thing temp = eshop::Thing(NULL,NULL,NULL,NULL,NULL);
 	f_things=fopen("things.dat","r+b");
 	int temp_size = sizeof(eshop::Thing);
 	fseek(f_things,-temp_size,SEEK_END);
-	fread(temp,sizeof(eshop::Thing),1,f_things);
-	for (int i = 0; i < temp->id; i++) {
+	fread(&temp,sizeof(eshop::Thing),1,f_things);
+	for (int i = 0; i < temp.id; i++) {
 		fseek(f_things, sizeof(eshop::Thing)*i, SEEK_SET);
-		fread(temp, sizeof(eshop::Thing), 1, f_things);
-		if(temp->available)
-		 std::cout << *(temp);
+		fread(&temp, sizeof(eshop::Thing), 1, f_things);
+		if(temp.available)
+		 std::cout << *(&temp);
 	}
 	fclose(f_things);
 }
