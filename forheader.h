@@ -1,12 +1,14 @@
 #pragma once
+
 namespace eshop {
 	struct User {
 		bool blacklist=false;
+		bool admin;
 		int money_balance=2000;
 		char login[20];
 		char password[20];
 		int id;
-		User(char const* login,char const* password,int id);
+		User(char const* login,char const* password,int id,bool admin);
 
 	};
 
@@ -35,7 +37,7 @@ namespace eshop {
 		void remove_from_order(int,const char*);
 	};
 	void delete_thing(int,char const*);
-	void add_new_thing(Thing*);
+	void add_new_thing(int price,const char* name,const char* category);
 	void add_to_black_list(int);
 	void create_new_catagory(const char*);
 }

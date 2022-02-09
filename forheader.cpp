@@ -16,7 +16,8 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 	Thing* data;
 	Thing* temp;
 	f_things = fopen("things.dat", "r+b");
-	if (!fseek(f_things, sizeof(eshop::Thing) * (id - 1), SEEK_SET)) {
+	if (!fseek(f_things, sizeof(eshop::Thing) * id, SEEK_SET)) {
+		fseek(f_things,sizeof(eshop::Thing)*(id-1),SEEK_SET);
 		fread(temp, sizeof(eshop::Thing), 1, f_things);
 		fclose(f_things);
 		if ((temp->id == id)&&(!strcmp(temp->name,name))) {
@@ -124,13 +125,14 @@ void eshop::add_to_black_list(int id)
 	f_blackl = fopen("black_list.dat","r+b");
 	f_users = fopen("users.dat", "r+b");
 	if (!fseek(f_users, sizeof(User) * id, SEEK_SET)) {
-		fseek(f_users,sizeof(User),SEEK_CUR);
+		fseek(f_users,sizeof(User)*(id-1),SEEK_SET);
 		fread(bluser, sizeof(User), 1, f_users);
 		if (!bluser->blacklist) {
 			bluser->blacklist = true;
-			fseek(f_users,-sizeof(User),SEEK_CUR);
+			long int temp_size= sizeof(User);
+			fseek(f_users,-temp_size,SEEK_CUR);
 			fwrite(bluser,sizeof(User),1,f_users);
-			fseek(f_blackl,-sizeof(User),SEEK_END);
+			fseek(f_blackl,-temp_size,SEEK_END);
 			fwrite(bluser,sizeof(User),1,f_blackl);
 		}
 	}
@@ -145,12 +147,13 @@ void eshop::delete_thing(int id, const char* name)
 	Thing* temp;
 	f_things = fopen("things.dat","r+b");
 	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
-		fseek(f_things, sizeof(Thing), SEEK_CUR);
+		fseek(f_things, sizeof(Thing)*(id-1), SEEK_SET);
 		fread(temp, sizeof(Thing), 1, f_things);
 		if (!strcmp(temp->name, name)) {
 			if (temp->available) {
 				temp->available = false;
-				fseek(f_things, -sizeof(Thing), SEEK_CUR);
+				long int temp_size = sizeof(Thing);
+				fseek(f_things, -temp_size, SEEK_CUR);
 				fwrite(temp,sizeof(Thing),1,f_things);
 				fclose(f_things);
 				return;
@@ -162,14 +165,70 @@ void eshop::delete_thing(int id, const char* name)
 
 }
 
-void eshop::add_new_thing(Thing* thing)
+void eshop::add_new_thing(int price, const char* name, const char* category)
 {
-	
+	int temp_size = sizeof(Thing);
+	int temp_last_id;
+	Thing* temp;
+
+	f_things = fopen("things.dat", "r+b");
+
+	fseek(f_things, -temp_size, SEEK_END);
+	fread(temp, sizeof(Thing), 1, f_things);
+	temp_last_id = temp->id;
+	for (int i = 0; i < temp_last_id; i++) {
+		fseek(f_things, sizeof(Thing) * i, SEEK_SET);
+		fread(temp, sizeof(Thing), 1, f_things);
+		if (!strcmp(temp->name, name) && (temp->price == price)) {
+			if (temp->available) {
+				std::cout << "Such thing is already in the list!!! \n";
+				fclose(f_things);
+				return;
+			}
+			else if (!temp->available) {
+				temp->available = true;
+				fseek(f_things, sizeof(Thing) * (temp->id - 1), SEEK_SET);
+				fwrite(temp, sizeof(Thing), 1, f_things);
+				fclose(f_things);
+				std::cout << "This thing is now available in our shop \n";
+				return;
+
+			}
+		}
+	}
+	fseek(f_things, 0, SEEK_END);
+	temp = new eshop::Thing(name, category, price, temp_last_id + 1, true);
+	fwrite(temp, sizeof(Thing), 1, f_things);
+	std::cout << "This thing is now available in our shop \n";
+	std::cout << *(temp);
+	fclose(f_things);
 
 }
 
+
+
+
 void eshop::create_new_catagory(const char* category)
 {
+	char temp_category[20];
+	int temp_size = sizeof(temp_category);
+
+	f_category = fopen("category.dat", "r+b");
+
+	for (int i = 0; !EOF; i++) {
+		fseek(f_category, sizeof(temp_size) * i, SEEK_SET);
+		fread(&temp_category, sizeof(temp_size), 1, f_category);
+		if (!strcmp(temp_category, category)) {
+			std::cout << "Such category already exist \n";
+			fclose(f_category);
+			return;
+		}
+	}
+	fseek(f_category, 0, SEEK_END);
+	fwrite(temp_category, sizeof(temp_size), 1, f_category);
+	std::cout <<"Category: "<<category<<" is now available in our shop \n";
+	fclose(f_category);
+
 }
 
 
@@ -188,7 +247,9 @@ void startprog()
 	std::cout << "Enter 1 to sign up\n";
 	std::cout << "Enter 2 to sign in\n";
 	std::cin >> c;
-	fseek(f_users, -sizeof(eshop::User), SEEK_END);
+
+	long int temp_size = sizeof(eshop::User);
+	fseek(f_users, -temp_size, SEEK_END);
 	fread(temp, sizeof(eshop::User), 1, f_users);
 	temp_c = temp->id;
 
@@ -216,7 +277,7 @@ void startprog()
 		std::cout << '\n';
 		std::cout << "Create your password:     ";
 		std::cin >> password;
-		eshop::User newuser = { login,password,temp_c + 1 };
+		eshop::User newuser = { login,password,temp_c + 1,false };
 		fseek(f_users, 0, SEEK_END);
 		fwrite(&newuser, sizeof(eshop::User), 1, f_users);
 		fclose(f_users);
@@ -235,7 +296,7 @@ void startprog()
 				if (!strcmp(temp->login, login)) {
 					if (!strcmp(temp->password, password)) {
 						std::cout << "Welcome\n";
-						if (temp->id==1)
+						if (temp->admin)
 							go_to_menu_admin();
 						else
 							go_to_menu(temp);
@@ -260,8 +321,9 @@ eshop::NodeList::Node::Node(Thing* data)
 	this->data = data;
 }
 
-eshop::User::User(char const* login, char const* password,int id)
+eshop::User::User(char const* login, char const* password,int id,bool admin)
 {
+	this->admin = admin;
 	this->id = id;
 	strcpy_s(this->login,login);
 	strcpy_s(this->password, password);
@@ -324,6 +386,67 @@ void go_to_menu(eshop::User* user) {
 
 void go_to_menu_admin()
 {
+	char temp_category[20];
+	char k;
+	
+	char name_of_thing[20];
+	int id;
+	int temp_price;
+	
+
+	std::cout << "Enter 1 to show categories of things\n";
+	std::cout << "Enter 2 to show the full list of things\n";
+	std::cout << "Enter 3 to add a thing to the list of available things\n";
+	std::cout << "Enter 4 to remove a thing from your list of available things\n";
+	std::cout << "Enter 5 to add user to a blacklist\n";
+	std::cout << "Enter 6 to create new category\n";
+	std::cout << '\n';
+	while (true) {
+		std::cin >> k;
+		switch (k) {
+		case 1:
+			show_all_categories();
+			std::cout << "Something else?\n";
+		case 2:
+			show_all_things_available();
+			std::cout << "Something else?\n";
+
+		case 3:
+			std::cout << "Name of the thing:   ";
+			std::cin >> name_of_thing;
+			std::cout << "Price of the thing:    ";
+			std::cin >> temp_price;
+			std::cout << "Category of the thing:    ";
+			std::cin >> temp_category;
+			eshop::add_new_thing(temp_price,name_of_thing,temp_category);
+			std::cout << "What else? \n";
+			continue;
+		case 4:
+			std::cout << "Name of the thing:   ";
+			std::cin >> name_of_thing;
+			std::cout << "Id of the thing:    ";
+			std::cin >> id;
+			eshop::delete_thing(id, name_of_thing);
+			std::cout << "What else? \n";
+			continue;
+		case 5:
+			std::cout << "Id of the user:    ";
+			std::cin >> id;
+			eshop::add_to_black_list(id);
+			std::cout << "What else? \n";
+			continue;
+		case 6:
+			std::cout << "Category of the thing:    ";
+			std::cin >> temp_category;
+			eshop::create_new_catagory(temp_category);
+			std::cout << "What else? \n";
+			continue;
+		}
+
+
+	}
+
+
 }
 
 void show_all_categories()
