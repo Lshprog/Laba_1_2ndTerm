@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
+#define _CRT_SECURE_NO_WARNINGS
 FILE* f_category;
 FILE* f_things;
 FILE* f_users;
@@ -125,8 +126,8 @@ void eshop::NodeList::remove_from_order(int id,const char* name)
 void eshop::add_to_black_list(int id)
 {
 	User* bluser;
-	f_blackl = fopen("black_list.dat","r+b");
-	f_users = fopen("users.dat", "r+b");
+	f_blackl=fopen("black_list.dat","r+b");
+	f_users=fopen("users.dat", "r+b");
 	if (!fseek(f_users, sizeof(User) * id, SEEK_SET)) {
 		fseek(f_users,sizeof(User)*(id-1),SEEK_SET);
 		fread(bluser, sizeof(User), 1, f_users);
@@ -148,7 +149,7 @@ void eshop::add_to_black_list(int id)
 void eshop::delete_thing(int id, const char* name)
 {
 	Thing* temp;
-	f_things = fopen("things.dat","r+b");
+	f_things= fopen("things.dat","r+b");
 	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
 		fseek(f_things, sizeof(Thing)*(id-1), SEEK_SET);
 		fread(temp, sizeof(Thing), 1, f_things);
@@ -245,7 +246,7 @@ void startprog()
 	int temp_c;
 	eshop::User* temp;
 
-	f_users = fopen("users.dat", "r+b");
+	f_users=fopen("users.dat", "r+b");
 	
 	std::cout << "Enter 1 to sign up\n";
 	std::cout << "Enter 2 to sign in\n";
@@ -389,7 +390,7 @@ void go_to_menu(eshop::User* user) {
 	
 }
 
-void go_to_menu_admin()
+void go_to_menu_admin(eshop::User* user)
 {
 	char temp_category[20];
 	char k;
@@ -452,7 +453,7 @@ void go_to_menu_admin()
 
 void show_all_categories()
 {
-	f_category = fopen("categories.dat","r+b");
+	f_category = fopen("category.dat","r+b");
 	char category[20];
 	fseek(f_category,0,SEEK_SET);
 	while (!feof(f_category)) {
@@ -466,7 +467,7 @@ void show_all_categories()
 void show_all_things_available()
 {
 	eshop::Thing* temp;
-	f_things = fopen("things.dat","r+b");
+	f_things=fopen("things.dat","r+b");
 	int temp_size = sizeof(eshop::Thing);
 	fseek(f_things,-temp_size,SEEK_END);
 	fread(temp,sizeof(eshop::Thing),1,f_things);
