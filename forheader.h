@@ -3,13 +3,13 @@
 
 namespace eshop {
 	struct User {
-		bool blacklist=false;
+		bool blacklist;
 		bool admin;
-		int money_balance=2000;
+		int money_balance;
 		char login[20];
 		char password[20];
 		int id;
-		User(char const* login,char const* password,int id,bool admin);
+		User(char const* login,char const* password,int id,bool admin,int money_balance,bool blacklist);
 
 	};
 
