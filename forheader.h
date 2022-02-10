@@ -13,13 +13,18 @@ namespace eshop {
 
 	};
 
+	struct Category {
+		int id;
+		char name[20];
+	};
+
 	struct Thing {
 		int price;
-		char category[20];
+		Category category;
 		char name[20];
 		int id;
 		bool available;
-		Thing(char const* name,char const* category,int price,int id,bool available);
+		Thing(char const* name,Category* category,int price,int id,bool available);
 	};
 	struct NodeList {
 	private:

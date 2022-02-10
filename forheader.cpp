@@ -8,10 +8,10 @@ FILE* f_things;
 FILE* f_users;
 FILE* f_blackl;
 
-char filecategory[]= "C:\\Users\\User\\source\\repos\\Lshprog\\Laba_1_2ndTerm\\dats\\category.dat";
-char filethings[] = "C:\\Users\\User\\source\\repos\\Lshprog\\Laba_1_2ndTerm\\dats\\things.dat";
-char fileusers[] = "C:\\Users\\User\\source\\repos\\Lshprog\\Laba_1_2ndTerm\\dats\\users.dat";
-char fileblackl[] = "C:\\Users\\User\\source\\repos\\Lshprog\\Laba_1_2ndTerm\\dats\\blackl.dat"; 
+const char fcategory[]= "dats\\category.dat";
+const char filethings[] = "dats\\things.dat";
+const char fileusers[] = "dats\\users.dat";
+const char fileblackl[] = "dats\\blackl.dat"; 
 
 std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 	out << "Name: " << c.name<< "    ";
@@ -25,7 +25,6 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 {	
 	char tempname[] = "";
 	Thing* temp =new Thing(tempname,tempname,0,0,true);
-
 	int temp_size = sizeof(eshop::Thing);
 	f_things = fopen(filethings, "rb+");
 	if (!fseek(f_things, temp_size * id, SEEK_SET)) {
@@ -231,7 +230,7 @@ void eshop::create_new_catagory(const char* category)
 
 	f_category = fopen(filecategory, "r+b");
 
-	for (int i = 0; !EOF; i++) {
+	for (int i = 0; feof(f_category)==0; i++) {
 		fseek(f_category, sizeof(temp_size) * i, SEEK_SET);
 		fread(&temp_category, sizeof(temp_size), 1, f_category);
 		if (!strcmp(temp_category, category)) {
@@ -481,8 +480,8 @@ void show_all_categories()
 {
 	f_category = fopen(filecategory,"r+b");
 	char category[20]="";
-	fseek(f_category,0,SEEK_SET);
-	while (true) {
+	
+	while (feof(f_category) == 0) {
 		fread(&category, sizeof(category), 1, f_category);
 		std::cout << category<<"  ";
 	}
@@ -492,7 +491,8 @@ void show_all_categories()
 void show_all_things_available()
 {
 	char tempch[]="";
-	eshop::Thing temp = eshop::Thing(tempch,tempch,0,0,false);
+	eshop::Category* temps;
+	eshop::Thing temp = eshop::Thing(tempch,temps,0,0,false);
 	f_things=fopen(filethings,"r+b");
 	int temp_size = sizeof(eshop::Thing);
 
@@ -511,11 +511,10 @@ void show_all_things_available()
 	fclose(f_things);
 }
 
-eshop::Thing::Thing(char const* name,char const* category, int price,int id,bool available)
+eshop::Thing::Thing(char const* name,Category* category, int price,int id,bool available)
 {
 	this->id = id;
 	this->price = price;
 	this->available = available;
-	strcpy_s(this->category,category);
 	strcpy_s(this->name,name);
 }
