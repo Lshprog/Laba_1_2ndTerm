@@ -16,7 +16,7 @@ namespace eshop {
 	struct Category {
 		int id;
 		char name[20];
-		Category(int id,const char* name);
+		
 	};
 
 	struct Thing {
