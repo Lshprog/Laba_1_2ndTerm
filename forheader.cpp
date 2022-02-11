@@ -8,7 +8,7 @@ FILE* f_things;
 FILE* f_users;
 FILE* f_blackl;
 
-const char fcategory[]= "dats\\category.dat";
+const char filecategory[]= "dats\\category.dat";
 const char filethings[] = "dats\\things.dat";
 const char fileusers[] = "dats\\users.dat";
 const char fileblackl[] = "dats\\blackl.dat"; 
@@ -17,6 +17,7 @@ std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 	out << "Name: " << c.name<< "    ";
 	out << "ID: " << c.id<<"    ";
 	out << "Price:  " << c.price;
+	out << " Category: " << c.category.name;
 	out << '\n';
 	return out;
 }
@@ -24,7 +25,8 @@ std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 void eshop::NodeList::add_to_order_thing(int id, char const* name)
 {	
 	char tempname[] = "";
-	Thing* temp =new Thing(tempname,tempname,0,0,true);
+	Category* category = new Category(0,tempname);
+	Thing* temp =new Thing(tempname,category,0,0,true);
 	int temp_size = sizeof(eshop::Thing);
 	f_things = fopen(filethings, "rb+");
 	if (!fseek(f_things, temp_size * id, SEEK_SET)) {
@@ -60,6 +62,7 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 	}
 	std::cout << "There is no such thing in our shop\n";
 	fclose(f_things);
+	
 
 }
 
@@ -158,7 +161,8 @@ void eshop::add_to_black_list(int id)
 void eshop::delete_thing(int id, const char* name)
 {
 	char tempname[] = "";
-	Thing temp = Thing(tempname, tempname, 0, 0, true);
+	Category* category = new Category(0,tempname);
+	Thing temp = Thing(tempname,category,0, 0, true);
 	f_things= fopen(filethings,"r+b");
 	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
 		fseek(f_things, sizeof(Thing)*(id-1), SEEK_SET);
@@ -176,17 +180,53 @@ void eshop::delete_thing(int id, const char* name)
 	}
 	std::cout << "Error \n";
 	fclose(f_things);
-
+	
 }
+eshop::Category eshop::check_category(char const* category) {
+	char temp_category[20] = "";
+	eshop::Category struct_category = eshop::Category(0,temp_category);
+	int temp_size = sizeof(eshop::Category);
+	int temp_id=0;
+	f_category = fopen(filecategory, "r+b");
+	fseek(f_category, -temp_size, SEEK_END);
+	fread(&struct_category, temp_size, 1, f_category);
+	temp_id = struct_category.id;
+	fseek(f_category, 0, SEEK_SET);
+	for (int i = 0; i < temp_id; i++) {
+		fread(&struct_category, temp_size, 1, f_category);
+		if (!strcmp(struct_category.name, category)) {
+			fclose(f_category);
+			return struct_category;
+		}
+	}
+	struct_category.id = temp_id + 1;
+	strcpy_s(struct_category.name, category);
+	fseek(f_category, 0, SEEK_END);
+	fwrite(&struct_category, temp_size, 1, f_category);
+	fclose(f_category);
+	return struct_category;
+}
+	
 
-void eshop::add_new_thing(int price, const char* name, const char* category)
+void eshop::add_new_thing(int price, const char* name,const char* temp_category)
 {
 	int temp_size = sizeof(Thing);
 	int temp_last_id;
 	char tempname[] = "";
-	Thing temp = Thing(tempname, tempname, 0, 0, true);
+	Category *category=new Category(0,tempname);
+	Thing temp = Thing(tempname, category, 0, 0, true);
 
 	f_things = fopen(filethings, "r+b");
+	if (feof) {
+		*category = eshop::check_category(temp_category);
+		temp = Thing(name, category, price, 1, true);
+		fwrite(&temp, sizeof(Thing), 1, f_things);
+		std::cout << "This thing is now available in our shop \n";
+		std::cout << *(&temp);
+		fclose(f_things);
+		
+		return;
+	}
 
 	fseek(f_things, -temp_size, SEEK_END);
 	fread(&temp, sizeof(Thing), 1, f_things);
@@ -194,7 +234,7 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 	for (int i = 0; i < temp_last_id; i++) {
 		fseek(f_things, temp_size * i, SEEK_SET);
 		fread(&temp, temp_size, 1, f_things);
-		if (!strcmp(temp.name, name) && (temp.price == price)) {
+		if (!strcmp(temp.name, name) && (temp.price == price)&&(!strcmp(temp.category.name,temp_category))) {
 			if (temp.available) {
 				std::cout << "Such thing is already in the list!!! \n";
 				fclose(f_things);
@@ -212,11 +252,13 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 		}
 	}
 	fseek(f_things, 0, SEEK_END);
+	*category = check_category(temp_category);
 	temp = Thing(name,category,price,temp_last_id+1,true);
 	fwrite(&temp, sizeof(Thing), 1, f_things);
 	std::cout << "This thing is now available in our shop \n";
 	std::cout << *(&temp);
 	fclose(f_things);
+	
 
 }
 
@@ -226,25 +268,33 @@ void eshop::add_new_thing(int price, const char* name, const char* category)
 void eshop::create_new_catagory(const char* category)
 {
 	char temp_category[20] = "";
-	int temp_size = sizeof(temp_category);
+	eshop::Category struct_category = eshop::Category(0, temp_category);
 
+	int temp_size = sizeof(eshop::Category);
+	int temp_id;
 	f_category = fopen(filecategory, "r+b");
-
-	for (int i = 0; feof(f_category)==0; i++) {
-		fseek(f_category, sizeof(temp_size) * i, SEEK_SET);
-		fread(&temp_category, sizeof(temp_size), 1, f_category);
-		if (!strcmp(temp_category, category)) {
+	fseek(f_category,-temp_size,SEEK_END);
+	fread(&struct_category,temp_size,1,f_category);
+	temp_id = struct_category.id;
+	fseek(f_category,0,SEEK_SET);
+	for (int i = 0; i < temp_id; i++) {
+		fread(&struct_category, temp_size, 1, f_category);
+		if (!strcmp(struct_category.name, category)) {
 			std::cout << "Such category already exist \n";
 			fclose(f_category);
 			return;
 		}
 	}
+	struct_category.id = temp_id + 1;
+	strcpy_s(struct_category.name,category);
 	fseek(f_category, 0, SEEK_END);
-	fwrite(&temp_category, sizeof(temp_size), 1, f_category);
+	fwrite(&struct_category, temp_size, 1, f_category);
 	std::cout <<"Category: "<<category<<" is now available in our shop \n";
 	fclose(f_category);
-
+	
 }
+
+
 
 
 
@@ -302,6 +352,8 @@ void startprog()
 		fwrite(&newuser, sizeof(eshop::User), 1, f_users);
 		fclose(f_users);	
 		go_to_menu(&newuser);
+		
+	
 	}
 	else if(c[0]=='2')
 	{
@@ -478,43 +530,65 @@ void go_to_menu_admin(eshop::User* user)
 
 void show_all_categories()
 {
-	f_category = fopen(filecategory,"r+b");
-	char category[20]="";
-	
-	while (feof(f_category) == 0) {
-		fread(&category, sizeof(category), 1, f_category);
-		std::cout << category<<"  ";
+	char temp_category[20] = "";
+	eshop::Category struct_category = eshop::Category(0,temp_category);
+	int temp_size = sizeof(eshop::Category);
+	int temp_id;
+	f_category = fopen(filecategory, "r+b");
+	if (feof(f_category)) {
+		std::cout << "No categories avialable \n";
+		fclose(f_category);
+		return;
+	}
+	fseek(f_category, -temp_size, SEEK_END);
+	fread(&struct_category, temp_size, 1, f_category);
+	temp_id = struct_category.id;
+	fseek(f_category, 0, SEEK_SET);
+	for (int i = 0; i<temp_id; i++) {
+		fread(&struct_category,temp_size,1,f_category);
+		std::cout << "Category: " << struct_category.name << "  Id: " << struct_category.id << '\n';
 	}
 	fclose(f_category);
+
 }
 
 void show_all_things_available()
 {
 	char tempch[]="";
-	eshop::Category* temps;
-	eshop::Thing temp = eshop::Thing(tempch,temps,0,0,false);
+	eshop::Category* temps =new eshop::Category(0,tempch);
+	eshop::Thing temp = eshop::Thing(tempch,temps , 0, 0, false);
 	f_things=fopen(filethings,"r+b");
 	int temp_size = sizeof(eshop::Thing);
-
+	if (feof(f_things)) {
+		std::cout << "No things avialable \n";
+		fclose(f_things);
+		return;
+	}
 	fseek(f_things,-temp_size,SEEK_END);
 	fread(&temp,temp_size,1,f_things);
-
-	int temp_id = temp.id;
+	int temp_id= temp.id;
 	fseek(f_things,0,SEEK_SET);
-
 	for (int i = 0; i<temp_id; i++) {
+
 		fread(&temp, temp_size, 1, f_things);
-		std::cout << "Test";
 		if(temp.available)
 			std::cout << *(&temp);
 	}
 	fclose(f_things);
+	
 }
 
 eshop::Thing::Thing(char const* name,Category* category, int price,int id,bool available)
 {
+	
 	this->id = id;
 	this->price = price;
 	this->available = available;
+	strcpy_s(this->name,name);
+}
+
+eshop::Category::Category(int id,const char* name )
+{
+	this->id = id;
 	strcpy_s(this->name,name);
 }

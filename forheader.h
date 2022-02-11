@@ -16,6 +16,7 @@ namespace eshop {
 	struct Category {
 		int id;
 		char name[20];
+		Category(int id,const char* name);
 	};
 
 	struct Thing {
@@ -46,6 +47,7 @@ namespace eshop {
 	void add_new_thing(int price,const char* name,const char* category);
 	void add_to_black_list(int);
 	void create_new_catagory(const char*);
+	Category check_category(const char*);
 }
 void startprog();
 void go_to_menu(eshop::User*);
