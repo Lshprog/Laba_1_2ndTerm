@@ -219,6 +219,8 @@ eshop::Category eshop::check_category(char const* category) {
 		if (!strcmp(struct_category.name, category)) {
 			if (!struct_category.flag_available) {
 				struct_category.flag_available = true;
+				fseek(f_category, -temp_size, SEEK_CUR);
+				fwrite(&struct_category, temp_size, 1, f_category);
 				fclose(f_category);
 				return struct_category;
 			}
@@ -311,6 +313,8 @@ void eshop::create_new_catagory(const char* category)
 			if (!struct_category.flag_available) {
 				struct_category.flag_available = true;
 				std::cout << "Category: " << category << " is now available in our shop \n";
+				fseek(f_category, -temp_size, SEEK_CUR);
+				fwrite(&struct_category,temp_size,1,f_category);
 				fclose(f_category);
 				return;
 			}
@@ -397,7 +401,7 @@ void startprog()
 		while (true) {
 			std::cout << "Enter your login:        ";
 			std::cin >> login;
-
+			fseek(f_users, 0, SEEK_SET);
 			for (int i = 0; i < temp_c; i++) {
 				fread(&temp, temp_size, 1, f_users);
 				if (!strcmp(temp.login, login)) {
@@ -409,8 +413,10 @@ void startprog()
 				break;
 			}
 			else {
+				std::cout << "This login is already taken \n";
 				incorrect_login = false;
-				continue;
+				startprog();
+				return;
 				
 			}
 		}
@@ -435,34 +441,45 @@ void startprog()
 			std::cout << "Enter your password:     ";
 			std::cin >> password;
 			fseek(f_users,0,SEEK_SET);
-			for (int i = 0; i <= temp_c; i++) {
+			for (int i = 0; i < temp_c; i++) {
 				fread(&temp, temp_size, 1, f_users);
 				if (!strcmp(temp.login, login)) {
+					std::cout << "Test1\n";
 					if (!strcmp(temp.password, password)) {
-						std::cout << "Welcome\n";
 						if (!temp.blacklist) {
-							if (temp.admin)
+							std::cout << "Welcome\n";
+							if (temp.admin) {
+								fclose(f_users);
 								go_to_menu_admin(&temp);
-							else
+								
+							}
+							else {
+								fclose(f_users);
 								go_to_menu(&temp);
+								
+							}
 							return;
 						}
 					}
 					else {
-						std::cout << "Incorrect login or password\n";
-						break;
+						
+						continue;
 					}
 				}
 				else {
-					std::cout << "Incorrect login or password\n";
-					break;
+					
+					continue;
 				}
 			}
+			std::cout << "Incorrect login or password\n";
+			startprog();
+			return;
 			}
 		}
 	else {
 		std::cout << "Enter appropriate char or number!!!!\n";
 		startprog();
+		return;
 	}
 	
 }
