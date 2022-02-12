@@ -10,12 +10,13 @@ namespace eshop {
 		char password[20];
 		int id;
 		User(char const* login,char const* password,int id,bool admin,int money_balance,bool blacklist);
-
+		void print_user(User user);
 	};
 
 	struct Category {
 		int id;
 		char name[20];
+		bool flag_available;
 		
 	};
 
@@ -25,7 +26,7 @@ namespace eshop {
 		char name[20];
 		int id;
 		bool available;
-		Thing(char const* name,Category* category,int price,int id,bool available);
+		Thing(char const* name,Category category,int price,int id,bool available);
 	};
 	struct NodeList {
 	private:
@@ -48,9 +49,11 @@ namespace eshop {
 	void add_to_black_list(int);
 	void create_new_catagory(const char*);
 	Category check_category(const char*);
+	void delete_catagory(const char* category, int id);
 }
 void startprog();
 void go_to_menu(eshop::User*);
 void go_to_menu_admin(eshop::User*);
 void show_all_categories();
 void show_all_things_available();
+void show_all_users();
