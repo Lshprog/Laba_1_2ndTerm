@@ -1,5 +1,6 @@
   Bill for polk
 
-Name:  nyam   Category: everything   Price: 72
+Name:  peek   Category: pork   Price: 90
+Name:  nuts   Category: food   Price: 21
 
-Total amount: 72
+Total amount: 111

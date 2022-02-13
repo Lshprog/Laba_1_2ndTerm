@@ -67,8 +67,8 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 	}
 	std::cout << "There is no such thing in our shop\n";
 	fclose(f_things);
-	
-
+	delete category;
+	delete temp;
 }
 
 
@@ -84,6 +84,12 @@ void eshop::NodeList::print_out_a_bill(User* user)
 	fprintf(f_bill, "\n");
 	
 	Node* iter = head;
+	if (head == nullptr && tail == nullptr) {
+		fprintf(f_bill,"You have orderd nothing!!!");
+		fclose(f_users);
+		fclose(f_bill);
+		return;
+	}
 	while (true) {
 		fprintf(f_bill, "Name:  ");
 		fprintf(f_bill,iter->data->name);
@@ -245,6 +251,8 @@ void eshop::delete_thing(int id, const char* name)
 	}
 	std::cout << "Error \n";
 	fclose(f_things);
+	delete category;
+	
 	
 }
 eshop::Category eshop::check_category(char const* category) {
@@ -767,6 +775,7 @@ void show_all_things_available()
 			std::cout << *(&temp);
 	}
 	fclose(f_things);
+	delete temps;
 	
 }
 
