@@ -2,16 +2,18 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
+#include <charconv>
 #define _CRT_SECURE_NO_WARNINGS
 FILE* f_category;
 FILE* f_things;
 FILE* f_users;
 FILE* f_blackl;
-
-const char filecategory[]= "dats\\category.dat";
-const char filethings[] = "dats\\things.dat";
-const char fileusers[] = "dats\\users.dat";
-const char fileblackl[] = "dats\\blackl.dat"; 
+FILE* f_bill;
+const char FILE_BILL[] = "dats\\bill.txt";
+const char FILECATEGORY[]= "dats\\category.dat";
+const char FILETHINGS[] = "dats\\things.dat";
+const char FILEUSERS[] = "dats\\users.dat";
+const char FILEBLACKL[] = "dats\\blackl.dat"; 
 
 std::ostream& operator<<(std::ostream& out, const eshop::Thing& c) {
 
@@ -31,7 +33,7 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 	Category* category = new Category();
 	Thing* temp =new Thing(tempname,*category,0,0,true);
 	int temp_size = sizeof(eshop::Thing);
-	f_things = fopen(filethings, "rb+");
+	f_things = fopen(FILETHINGS, "rb+");
 	if (!fseek(f_things, temp_size * id, SEEK_SET)) {
 		fseek(f_things, temp_size *(id-1),SEEK_SET);
 		fread(temp, temp_size, 1, f_things);
@@ -72,10 +74,51 @@ void eshop::NodeList::add_to_order_thing(int id, char const* name)
 
 void eshop::NodeList::print_out_a_bill(User* user)
 {
+	int totalprice=0;
+	char const* temp_char;
+	f_bill = fopen(FILE_BILL, "w");
+	f_users = fopen(FILEUSERS,"r+b");
+	fprintf(f_bill, "  Bill for ");
+	fprintf(f_bill, user->login);
+	fprintf(f_bill, "\n");
+	fprintf(f_bill, "\n");
+	
 	Node* iter = head;
-	while (iter != nullptr) {
-
+	while (true) {
+		fprintf(f_bill, "Name:  ");
+		fprintf(f_bill,iter->data->name);
+		fprintf(f_bill, "   Category: ");
+		fprintf(f_bill, iter->data->category.name);
+		fprintf(f_bill, "   Price: ");
+		std::string tmp = std::to_string(iter->data->price);
+		temp_char = tmp.c_str();
+		fprintf(f_bill, temp_char);
+		totalprice += iter->data->price;
+		fprintf(f_bill,"\n");
+		if (iter == tail)
+			break;
+		iter = iter->next;
 	}
+	fprintf(f_bill, "\n");
+	fprintf(f_bill, "Total amount: ");
+	std::string tmp = std::to_string(totalprice);
+	temp_char = tmp.c_str();
+	fprintf(f_bill, temp_char);
+	fclose(f_bill);
+	if (totalprice > user->money_balance) {
+		fclose(f_users);
+		add_to_black_list(user->id);
+		return;
+	}
+	else {
+		int temp_size = sizeof(eshop::User);
+		user->money_balance = user->money_balance - totalprice;
+		fseek(f_users,temp_size*(user->id-1),SEEK_SET);
+		fwrite(user,temp_size,1,f_users);
+		fclose(f_users);
+	}
+		
+	
 }
 
 void eshop::NodeList::print_out_an_order(User* user)
@@ -142,8 +185,8 @@ void eshop::add_to_black_list(int id)
 	char temppass[]="";
 	int temp_size_new = sizeof(User);
 	eshop::User bluser = eshop::User(templogin, temppass, 0, false, 0, false);
-	f_blackl=fopen(fileblackl,"r+b");
-	f_users=fopen(fileusers, "r+b");
+	f_blackl=fopen(FILEBLACKL,"r+b");
+	f_users=fopen(FILEUSERS, "r+b");
 	if (!fseek(f_users, temp_size_new * id, SEEK_SET)) {
 		fseek(f_users, temp_size_new *(id-1),SEEK_SET);
 		fread(&bluser, temp_size_new, 1, f_users);
@@ -167,7 +210,7 @@ void show_all_users()
 	char temppass[] = "";
 	int temp_id;
 	eshop::User temp = eshop::User(templogin, temppass, 0, false, 0, false);
-	f_users = fopen(fileusers,"r+b");
+	f_users = fopen(FILEUSERS,"r+b");
 	int temp_size = sizeof(eshop::User);
 	fseek(f_users, -temp_size, SEEK_END);
 	fread(&temp, temp_size, 1, f_users);
@@ -185,7 +228,7 @@ void eshop::delete_thing(int id, const char* name)
 	char tempname[] = "";
 	Category* category = new Category();
 	Thing temp = Thing(tempname,*category,0, 0, true);
-	f_things= fopen(filethings,"r+b");
+	f_things= fopen(FILETHINGS,"r+b");
 	if (!fseek(f_things, sizeof(Thing) * id, SEEK_SET)) {
 		fseek(f_things, sizeof(Thing)*(id-1), SEEK_SET);
 		fread(&temp, sizeof(Thing), 1, f_things);
@@ -209,7 +252,7 @@ eshop::Category eshop::check_category(char const* category) {
 	eshop::Category struct_category = eshop::Category();
 	int temp_size = sizeof(eshop::Category);
 	int temp_id=0;
-	f_category = fopen(filecategory, "r+b");
+	f_category = fopen(FILECATEGORY, "r+b");
 	fseek(f_category, -temp_size, SEEK_END);
 	fread(&struct_category, temp_size, 1, f_category);
 	temp_id = struct_category.id;
@@ -246,7 +289,7 @@ void eshop::add_new_thing(int price, const char* name,const char* temp_category)
 	Category category=Category();
 	Thing temp = Thing(tempname, category, 0, 0, true);
 
-	f_things = fopen(filethings, "r+b");
+	f_things = fopen(FILETHINGS, "r+b");
 	if (feof(f_things)) {
 		category = eshop::check_category(temp_category);
 		temp = Thing(name, category, price, 1, true);
@@ -302,7 +345,7 @@ void eshop::create_new_catagory(const char* category)
 
 	int temp_size = sizeof(eshop::Category);
 	int temp_id;
-	f_category = fopen(filecategory, "r+b");
+	f_category = fopen(FILECATEGORY, "r+b");
 	fseek(f_category,-temp_size,SEEK_END);
 	fread(&struct_category,temp_size,1,f_category);
 	temp_id = struct_category.id;
@@ -338,7 +381,7 @@ void eshop::delete_catagory(const char* category,int id)
 	eshop::Category struct_category = eshop::Category();
 
 	int temp_size = sizeof(eshop::Category);
-	f_category = fopen(filecategory, "r+b");
+	f_category = fopen(FILECATEGORY, "r+b");
 	if (!fseek(f_category, temp_size*id, SEEK_SET)) {
 		fseek(f_category, temp_size * (id - 1), SEEK_SET);
 		fread(&struct_category, temp_size, 1, f_category);
@@ -375,7 +418,7 @@ void startprog()
 	
 	eshop::User temp=eshop::User(templogin,temppass,0,false,0,false);
 	
-	f_users=fopen(fileusers, "r+b");
+	f_users=fopen(FILEUSERS, "r+b");
 		
 	int temp_size = sizeof(temp);
 	fseek(f_users, -temp_size, SEEK_END);
@@ -444,7 +487,6 @@ void startprog()
 			for (int i = 0; i < temp_c; i++) {
 				fread(&temp, temp_size, 1, f_users);
 				if (!strcmp(temp.login, login)) {
-					std::cout << "Test1\n";
 					if (!strcmp(temp.password, password)) {
 						if (!temp.blacklist) {
 							std::cout << "Welcome\n";
@@ -505,7 +547,8 @@ void eshop::User::print_user(eshop::User user)
 	std::cout << "Login: " << user.login << "  ";
 	std::cout << "Password: " << user.password << "  ";
 	std::cout << "In blacklist  " << user.blacklist << "  ";
-	std::cout << "Admin: " << user.admin;
+	std::cout << "Admin: " << user.admin<<"  ";
+	std::cout << "Money balance: " << user.money_balance;
 	std::cout << '\n';
 }
 void go_to_menu(eshop::User* user) {
@@ -682,7 +725,7 @@ void show_all_categories()
 	eshop::Category struct_category = eshop::Category();
 	int temp_size = sizeof(eshop::Category);
 	int temp_id;
-	f_category = fopen(filecategory, "r+b");
+	f_category = fopen(FILECATEGORY, "r+b");
 	if (feof(f_category)) {
 		std::cout << "No categories avialable \n";
 		fclose(f_category);
@@ -706,7 +749,7 @@ void show_all_things_available()
 	char tempch[]="";
 	eshop::Category* temps =new eshop::Category;
 	eshop::Thing temp = eshop::Thing(tempch,*temps , 0, 0, false);
-	f_things=fopen(filethings,"r+b");
+	f_things=fopen(FILETHINGS,"r+b");
 	int temp_size = sizeof(eshop::Thing);
 	if (feof(f_things)) {
 		std::cout << "No things avialable \n";
